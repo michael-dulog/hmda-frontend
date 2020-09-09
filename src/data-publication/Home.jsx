@@ -1,9 +1,12 @@
 import React, { Component } from 'react'
-
 import Heading from '../common/Heading.jsx'
+import YearSelector from '../common/YearSelector'
+import { withAppContext } from '../common/appContextHOC.jsx'
 
 class Home extends Component {
   render() {
+    const { match, config } = this.props
+
     return (
       <div className="home">
         <div className="intro">
@@ -23,6 +26,12 @@ class Home extends Component {
             </p>
           </Heading>
         </div>
+
+        <YearSelector 
+          year={match.params.year}
+          years={config.dataPublicationYears.shared}
+          url='/data-publication'
+        />
 
         <div className="card-container">
           <div className="card">
@@ -93,4 +102,4 @@ class Home extends Component {
   }
 }
 
-export default Home
+export default withAppContext(Home)
