@@ -4,11 +4,12 @@ import { LABELS, TOPICS } from './constants'
 import { fetchData } from '../utils/api'
 import { DownloadButton } from './DownloadButton'
 import { RegenerateButton } from './RegenerateButton'
+import * as AccessToken from '../../common/api/AccessToken'
 
 const defaultState = {
   waiting: false,
   error: false,
-  message: null
+  message: null,
 }
 
 const regenMsg = (label) => 'Begin the regeneration process for ' + label + '?'
@@ -16,23 +17,25 @@ const regenMsg = (label) => 'Begin the regeneration process for ' + label + '?'
 export const PublicationRow = ({
   fetched,
   institution,
-  token,
   type,
   url,
   error,
-  seqNum
+  seqNum,
 }) => {
   const label = LABELS[type]
   const topic = TOPICS[type]
 
   const { lei, respondentName, activityYear: year } = institution
   const headers = {}
+  const token = AccessToken.get()
   if (token) headers['Authorization'] = `Bearer ${token}`
 
   const [state, setState] = useState(defaultState)
 
-  const updateState = newState => setState((oldState) => ({...oldState, ...newState }))
-  const saveError = message => updateState({ waiting: false, error: true, message})
+  const updateState = (newState) =>
+    setState((oldState) => ({ ...oldState, ...newState }))
+  const saveError = (message) =>
+    updateState({ waiting: false, error: true, message })
 
   const handleRegeneration = () => {
     if (window.confirm(regenMsg(label))) {
@@ -76,7 +79,6 @@ export const PublicationRow = ({
   )
 }
 
-
 // Send a Kafka topic
 function triggerRegeneration(onError, onSuccess, data) {
   const { seqNum, topic, lei, year, headers, label } = data
@@ -93,7 +95,7 @@ function triggerRegeneration(onError, onSuccess, data) {
       onSuccess({
         waiting: false,
         error: false,
-        message: `Regeneration of ${year} ${label} triggered!`
+        message: `Regeneration of ${year} ${label} triggered!`,
       })
     })
     .catch((err) => onError(`Some other error: ${err}`))

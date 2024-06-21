@@ -1,7 +1,7 @@
 .Footer {
   bottom: 0;
   left: 0;
-  position: absolute;
+  position: relative;
   width: 100%;
 }
 .Footer .content-wrapper {
@@ -58,4 +58,11 @@
   margin: 0 auto 1em;
   max-width: 1040px;
   padding: 0 3rem;
+}
+
+@media screen and (max-width: 850px) {
+  .Footer .grid .item {
+    flex: 1;
+    margin: 0 2em;
+  }
 }

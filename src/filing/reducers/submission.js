@@ -5,7 +5,7 @@ import {
   UPDATE_STATUS,
   VERIFY_QUALITY,
   VERIFY_MACRO,
-  REFRESH_STATE
+  REFRESH_STATE,
 } from '../constants'
 import { UNINITIALIZED } from '../constants/statusCodes.js'
 
@@ -14,13 +14,14 @@ export const defaultSubmission = {
   filename: '',
   status: {
     code: UNINITIALIZED,
-    message: ''
+    message: '',
   },
   qualityExists: false,
   qualityVerified: false,
   macroExists: false,
   macroVerified: false,
-  isFetching: false
+  isFetching: false,
+  isStalled: false,
 }
 
 /*
@@ -41,34 +42,35 @@ export default (state = defaultSubmission, action) => {
           qualityExists: action.qualityExists || false,
           qualityVerified: action.qualityVerified || false,
           macroExists: action.macroExists || false,
-          macroVerified: action.macroVerified || false
+          macroVerified: action.macroVerified || false,
+          isStalled: action.isStalled,
         }
       return state
     case SELECT_FILE:
       return {
         ...state,
-        filename: action.file.name
+        filename: action.file.name,
       }
     case REQUEST_SUBMISSION:
       return {
         ...state,
-        isFetching: true
+        isFetching: true,
       }
     case UPDATE_STATUS:
       if (action.status.code === state.status.code) return state
       return {
         ...state,
-        status: action.status
+        status: action.status,
       }
     case VERIFY_QUALITY:
       return {
         ...state,
-        qualityVerified: action.checked
+        qualityVerified: action.checked,
       }
     case VERIFY_MACRO:
       return {
         ...state,
-        macroVerified: action.checked
+        macroVerified: action.checked,
       }
 
     case REFRESH_STATE:

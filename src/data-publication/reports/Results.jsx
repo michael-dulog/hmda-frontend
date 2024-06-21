@@ -1,4 +1,5 @@
 import React from 'react'
+import { MLAR } from '../../common/s3/fileProxy'
 
 import './Results.css'
 
@@ -31,7 +32,7 @@ class Results extends React.Component {
       length > DEFAULT_NUMBER_OF_INSTITUTIONS
     ) {
       return (
-        <button onClick={this.handleShowAllClick} className="button">
+        <button onClick={this.handleShowAllClick} className='button'>
           View all {length} results
         </button>
       )
@@ -63,7 +64,7 @@ class Results extends React.Component {
   renderError(error) {
     let headerText = 'List of institutions unavailable'
     let body = (
-      <p className="alert-text">
+      <p className='alert-text'>
         We're unable to load the institutions. Please try refreshing your
         browser.
       </p>
@@ -71,17 +72,17 @@ class Results extends React.Component {
     if (error === 'Not a filer') {
       headerText = 'Institution not found'
       body = (
-        <p className="alert-text">
+        <p className='alert-text'>
           Sorry, that institution isn't in our list of filers. If you think this
           is incorrect please contact{' '}
-          <a href="mailto:hmdahelp@cfpb.gov">hmdahelp@cfpb.gov</a>.
+          <a href='mailto:hmdahelp@cfpb.gov'>hmdahelp@cfpb.gov</a>.
         </p>
       )
     }
     return (
-      <div className="alert alert-error" role="alert">
-        <div className="alert-body">
-          <h3 className="alert-heading">{headerText}</h3>
+      <div className='alert alert-error' role='alert'>
+        <div className='alert-body'>
+          <h3 className='alert-heading'>{headerText}</h3>
           {body}
         </div>
       </div>
@@ -89,27 +90,34 @@ class Results extends React.Component {
   }
 
   makeListItem(institution, index) {
-    const normalizedInstitution =
-      this.is2017()
-        ? {
-            title: 'Institution ID',
-            id: institution.institutionId
-          }
-        : { title: 'LEI', id: institution.lei }
+    const normalizedInstitution = this.is2017()
+      ? {
+          title: 'Institution ID',
+          id: institution.institutionId,
+        }
+      : { title: 'LEI', id: institution.lei }
 
-    const headeredFile = this.state.withHeader
-      ? { dir: 'header/', fname: '_header' }
-      : { dir: '', fname: '' }
+    const href = MLAR.buildURL(
+      this.props.year,
+      normalizedInstitution.id,
+      this.state.withHeader,
+    )
 
-    const href = `https://s3.amazonaws.com/cfpb-hmda-public/prod/modified-lar/${this.props.year}/${headeredFile.dir}${normalizedInstitution.id}${headeredFile.fname}.txt`
+    // Need to set filename since the File Proxy url no longer directly references the file name
+    let filename = institution.lei
+    if (this.state.withHeader) filename += '_header'
+    filename += '.csv'
+
     return (
       <li key={index}>
         <h4>{institution.name}</h4>
         <p>
           {normalizedInstitution.title}: {normalizedInstitution.id}
         </p>
-        <a className="font-small" href={href} download>
-          {`Download Modified LAR ${this.state.withHeader ? 'with Header' : ''}`}
+        <a className='font-small' href={href} download={filename}>
+          {`Download Modified LAR ${
+            this.state.withHeader ? 'with Header' : ''
+          }`}
         </a>
       </li>
     )
@@ -142,7 +150,7 @@ class Results extends React.Component {
           name='inclHeader'
           id='inclHeader'
           value={this.state.withHeader}
-          onChange={e => this.setState({ withHeader: e.target.checked })}
+          onChange={(e) => this.setState({ withHeader: e.target.checked })}
         />
       </p>
     )
@@ -154,7 +162,7 @@ class Results extends React.Component {
 
     let visibleInstitutions = this.props.institutions.slice(
       0,
-      DEFAULT_NUMBER_OF_INSTITUTIONS
+      DEFAULT_NUMBER_OF_INSTITUTIONS,
     )
 
     if (this.state.showAll === true) {
@@ -168,9 +176,9 @@ class Results extends React.Component {
         {this.props.isModLar && this.renderIncludeFileHeader()}
         {this.renderHeading(
           this.props.institutions.length,
-          this.props.inputValue
+          this.props.inputValue,
         )}
-        <ul className="Results">{visibleInstitutions.map(mapper)}</ul>
+        <ul className='Results'>{visibleInstitutions.map(mapper)}</ul>
         {this.renderViewAllButton(this.props.institutions.length)}
       </React.Fragment>
     )

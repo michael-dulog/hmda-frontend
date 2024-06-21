@@ -1,10 +1,10 @@
 export const LABELS = {
-  'mlar': 'Modified LAR',
-  'irs': 'IRS'
+  mlar: 'Modified LAR',
+  irs: 'IRS',
 }
 
 // Regeneration - Kafka Topic
 export const TOPICS = {
-  'mlar': 'hmda-analytics',
-  'irs': 'hmda-irs'
+  mlar: 'hmda-modified-lar',
+  irs: 'hmda-irs',
 }

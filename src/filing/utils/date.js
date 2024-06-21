@@ -1,8 +1,7 @@
-import { splitYearQuarter } from '../api/utils.js'
-
-export const months = 'January,February,March,April,May,June,July,August,September,October,November,December'.split(
-  ','
-)
+export const months =
+  'January,February,March,April,May,June,July,August,September,October,November,December'.split(
+    ',',
+  )
 
 export function nth(d) {
   if (d > 3 && d < 21) return 'th'
@@ -23,12 +22,12 @@ export function padZero(n) {
   return n < 0 ? '-0' + -n : '0' + n
 }
 
-export function ordinal(d, options=({nthDate: true})) {
+export function ordinal(d, options = { nthDate: true }) {
   const { nthDate } = options
   const month = months[d.getMonth()]
-  const day = d.getDate() + (nthDate ? nth(day) : '')
-
-  return `${month} ${day }, ${d.getFullYear()}`
+  const day = d.getDate()
+  const dayStr = `${day}${nthDate ? nth(day) : ''}`
+  return `${month} ${dayStr}, ${d.getFullYear()}`
 }
 
 export function ordinalHour(d) {
@@ -41,70 +40,60 @@ export function ordinalHour(d) {
   return `${ordinal(d)}, ${hour}:${min}:${sec} ${period}`
 }
 
-export function afterFilingPeriod(period, filingQuarters) {
-  if(openForPreview(period, filingQuarters)) return false
-  const timezoneOffsetHours = new Date().getTimezoneOffset() / 60 // Calculate UTC Hours Offset
-  let [year, quarter] = splitYearQuarter(period)
-  year = parseInt(year, 10)
-  const yearAdjusted = quarter ? year : year + 1
-  const endDate = quarter
-    ? qtrBoundaryDate(quarter, filingQuarters, 1)
-    : qtrBoundaryDate("ANNUAL", filingQuarters, 1)
-  const deadline = Date.UTC(
-    yearAdjusted,
-    endDate.month,
-    endDate.day,
-    23 + timezoneOffsetHours, // 1 second before Midnight, local time
-    59,
-    59
+const msToDays = (ms) => ms / (1000 * 60 * 60 * 24)
+
+const msToHours = (ms) => ms / (1000 * 60 * 60)
+
+export const numDaysBetween = function (d1, d2) {
+  var diff = d1.getTime() - d2.getTime()
+  return msToDays(diff)
+}
+
+export const hoursSince = (timestamp) => {
+  const diffTime = Date.now() - timestamp
+  return msToHours(diffTime)
+}
+
+export const stdTimezoneOffset = (date) => {
+  var jan = new Date(date.getFullYear(), 0, 1)
+  var jul = new Date(date.getFullYear(), 6, 1)
+  return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset())
+}
+
+export const isDstObserved = (date = new Date()) => {
+  return date.getTimezoneOffset() < stdTimezoneOffset(date)
+}
+
+// Calculate hour adjustment needed to convert to Eastern timezone
+// Standard = GMT-5, Daylight Savings = GMT-4
+export const easternOffsetHours = (date = new Date()) => {
+  const eastOffset = isDstObserved() ? 4 : 5
+  return date.getTimezoneOffset() / 60 - eastOffset
+}
+
+/**
+ * Function to format timestamp and return a string with eastern timezone
+ * @param {Number} timeToFormat timestamp of when receipt was submitted
+ * @returns formatted string that includes month, day, year and time from ET
+ */
+export const formatReceiptTime = (timeToFormat) => {
+  let timezone = {
+    timeZone: 'America/New_York',
+  }
+
+  const options = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    ...timezone,
+  }
+
+  const date = new Date(timeToFormat)
+
+  return (
+    date.toLocaleDateString('en-US', options) +
+    ',' +
+    date.toLocaleString('en-US', timezone).split(',')[1] +
+    ' ET'
   )
-  if (!deadline) throw new Error('Error calculating filing period deadline')
-  return Date.now() > deadline
-}
-
-export function beforeFilingPeriod(period, filingQuarters) {
-  if(openForPreview(period, filingQuarters)) return false
-  const timezoneOffsetHours = new Date().getTimezoneOffset() / 60 // Calculate UTC Hours Offset
-  let [year, quarter] = splitYearQuarter(period)
-  year = parseInt(year, 10)
-  const yearAdjusted = quarter ? year : year + 1
-  const startDate = quarter
-    ? qtrBoundaryDate(quarter, filingQuarters)
-    : qtrBoundaryDate("ANNUAL", filingQuarters)
-  const start = Date.UTC(
-    yearAdjusted,
-    startDate.month,
-    startDate.day,
-    timezoneOffsetHours, // Midnight, local time
-    0,
-    0
-  )
-  if (!start) throw new Error("Error calculating filing period starting date")
-  return Date.now() < start
-}
-
-export function withinFilingPeriod(year, filingQuarters) {
-  return !beforeFilingPeriod(year, filingQuarters) && !afterFilingPeriod(year, filingQuarters)
-}
-
-// MonthName DayNumber
-export const formattedQtrBoundaryDate = (qtr, filingQuarters, startOrEnd=1) => {
-  const date = qtrBoundaryDate(qtr, filingQuarters, startOrEnd)
-  return formattedBoundaryDate(date)
-}
-
-// Format quarterly end date for creation of Date object
-export const qtrBoundaryDate = (qtr, filingQuarters, startOrEnd=0) => {
-  const monthDay = filingQuarters[qtr].split(' - ')[startOrEnd]
-  const [month, day] = monthDay.split('/').map(s => parseInt(s, 10))
-  return { day, month: month - 1 }
-}
-
-export const formattedBoundaryDate = (obj) => `${months[obj.month]} ${obj.day}`
-
-// Allow for a period to be opened for pre-release without causing ripple effects
-const openForPreview = (period, filingQuarters) => {
-  const previewPeriods = filingQuarters && filingQuarters.PREVIEW
-  if(!previewPeriods) return false
-  return previewPeriods.indexOf(period) > -1
 }

@@ -8,7 +8,8 @@
   margin-top: 3em;
 }
 
-.heading .font-lead, .heading .lead {
+.heading .font-lead,
+.heading .lead {
   color: #5b616b;
   margin-top: 0;
   font-size: 2rem;
@@ -41,4 +42,9 @@
   line-height: 1;
   margin: 0 0 -2px;
   padding: 0 2.5rem 0 0.5rem;
+}
+
+/* Target Tool Announcment Banner when it's available */
+.heading .alert-body .alert-text {
+  max-width: 100%;
 }

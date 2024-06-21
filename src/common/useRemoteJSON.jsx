@@ -15,9 +15,11 @@ export function useRemoteJSON(sourceUrl, options = {}) {
   const [isFetching, setIsFetching] = useState(false)
   const [error, setError] = useState(null)
 
+  const { forceFetch } = options
+
   const shouldFetch =
-    options.forceFetch ||
-    (process.env.REACT_APP_ENVIRONMENT !== 'CI' &&   // Not CI
+    forceFetch ||
+    (import.meta.env.VITE_ENVIRONMENT !== 'CI' && // Not CI
       window.location.host.indexOf('localhost') < 0) // Not localhost
 
   useEffect(() => {
@@ -27,8 +29,10 @@ export function useRemoteJSON(sourceUrl, options = {}) {
 
     fetch(sourceUrl)
       .then((response) => {
-        if (hasHttpError(response)) return Promise.reject(response)
-        return response.json()
+        return hasHttpError(response).then((res) => {
+          if (res) return Promise.reject(response)
+          return response.json()
+        })
       })
       .then((json) => {
         if (options.transformReceive) setData(options.transformReceive(json))

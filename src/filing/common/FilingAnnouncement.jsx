@@ -1,14 +1,17 @@
 import React from 'react'
-import Alert from '../../common/Alert'
+import ConfiguredAlert from '../../common/ConfiguredAlert'
+import { parseTimedGuardDate } from '../../deriveConfig'
 
 export const FilingAnnouncement = ({ data }) => {
-  const { message, type, heading } = data
-  
+  const showAnnouncement =
+    !data.endDate || Date.now() < parseTimedGuardDate(data.endDate, true)
+
+  if (!showAnnouncement) return null
+
+  // Announcement wrapper restricts Alert width
   return (
     <div className='Announcement'>
-      <Alert type={type} heading={heading}>
-        <p>{message}</p>
-      </Alert>
+      <ConfiguredAlert {...data} />
     </div>
   )
 }

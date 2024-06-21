@@ -2,48 +2,61 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import {
   PARSED_WITH_ERRORS,
-  PARSED,
   SYNTACTICAL_VALIDITY_EDITS,
+  NO_SYNTACTICAL_VALIDITY_EDITS,
   NO_QUALITY_EDITS,
   NO_MACRO_EDITS,
   MACRO_EDITS,
   VALIDATED,
-  SIGNED
+  SIGNED,
+  UPLOADED,
 } from '../constants/statusCodes.js'
 
 import './Progress.css'
 
 const navMap = {
   upload: {
-    isErrored: submission => submission.status.code === PARSED_WITH_ERRORS,
-    isCompleted: submission => submission.status.code >= PARSED,
-    errorText: 'uploaded with formatting errors',
-    completedText: 'uploaded'
+    isErrored: (submission) =>
+      submission.status.code === PARSED_WITH_ERRORS || submission.isStalled,
+    isCompleted: (submission) => submission.status.code > UPLOADED,
+    errorText: 'upload error',
+    completedText: 'uploaded',
   },
   'syntactical & validity edits': {
-    isErrored: submission => submission.status.code === SYNTACTICAL_VALIDITY_EDITS,
-    isCompleted: submission => submission.status.code > SYNTACTICAL_VALIDITY_EDITS,
+    isErrored: (submission) =>
+      submission.status.code === SYNTACTICAL_VALIDITY_EDITS,
+    isCompleted: (submission) =>
+      submission.status.code >= NO_SYNTACTICAL_VALIDITY_EDITS,
     errorText: 'syntactical & validity edits',
-    completedText: 'no syntactical & validity edits'
+    completedText: 'no syntactical & validity edits',
   },
   'quality edits': {
-    isErrored: submission => submission.qualityExists && !submission.qualityVerified,
-    isCompleted: submission => submission.status.code >= NO_QUALITY_EDITS && (!submission.qualityExists || submission.qualityVerified),
-    errorText: 'quality edits'  ,
-    completedText: 'quality edits verified'
+    isErrored: (submission) =>
+      submission.qualityExists && !submission.qualityVerified,
+    isCompleted: (submission) =>
+      submission.status.code >= NO_QUALITY_EDITS &&
+      (!submission.qualityExists || submission.qualityVerified),
+    errorText: 'quality edits',
+    completedText: 'quality edits verified',
   },
   'macro quality edits': {
-    isErrored: submission => submission.macroExists && !submission.macroVerified,
-    isCompleted: submission => (submission.status.code > MACRO_EDITS || submission.status.code === NO_MACRO_EDITS) && (!submission.macroExists || submission.macroVerified),
+    isErrored: (submission) =>
+      submission.macroExists && !submission.macroVerified,
+    isCompleted: (submission) =>
+      (submission.status.code > MACRO_EDITS ||
+        submission.status.code === NO_MACRO_EDITS) &&
+      (!submission.macroExists || submission.macroVerified),
     errorText: 'macro quality edits',
-    completedText: 'macro quality edits verified'
+    completedText: 'macro quality edits verified',
   },
   submission: {
-    isReachable: submission => submission.status.code >= VALIDATED || submission.status.code === NO_MACRO_EDITS ,
+    isReachable: (submission) =>
+      submission.status.code >= VALIDATED ||
+      submission.status.code === NO_MACRO_EDITS,
     isErrored: () => false,
-    isCompleted: submission => submission.status.code === SIGNED,
-    completedText: 'submitted'
-  }
+    isCompleted: (submission) => submission.status.code === SIGNED,
+    completedText: 'submitted',
+  },
 }
 
 const renderNavItem = (submission, name, i) => {
@@ -70,7 +83,7 @@ const renderNavItem = (submission, name, i) => {
 
   return (
     <li key={i} className={navClass}>
-      <div key={0} className="step">
+      <div key={0} className='step'>
         {step}
       </div>
       <span key={1}>{renderedName}</span>
@@ -78,23 +91,23 @@ const renderNavItem = (submission, name, i) => {
   )
 }
 
-const Progress = ({submission = { status: { code: 1 } }}) => {
+const Progress = ({ submission = { status: { code: 1 } } }) => {
   return (
-    <section className="Progress">
-      <nav className="EditsNav" id="editsNav">
-        <ul className="nav-primary">
+    <section className='Progress'>
+      <nav className='EditsNav' id='editsNav'>
+        <ul className='nav-primary'>
           {Object.keys(navMap).map((name, i) => {
             return renderNavItem(submission, name, i)
           })}
         </ul>
-        <hr className="nav-bg" />
+        <hr className='nav-bg' />
       </nav>
     </section>
   )
 }
 
 Progress.propTypes = {
-  status: PropTypes.object
+  status: PropTypes.object,
 }
 
 export default Progress

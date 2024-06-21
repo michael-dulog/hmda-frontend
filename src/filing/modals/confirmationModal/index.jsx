@@ -1,14 +1,15 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import RefileText from './RefileText.jsx'
+import { isBeta } from '../../../common/Beta.jsx'
 
 import '../Modal.css'
 
-let _focusButton = function() {
+let _focusButton = function () {
   return this.confirmButton.focus()
 }
 
-let _focusLink = function() {
+let _focusLink = function () {
   return this.hideLink.focus()
 }
 
@@ -19,7 +20,7 @@ export function _focusIfShowing() {
   }
 }
 
-let _escKeyPress = function(event) {
+let _escKeyPress = function (event) {
   if (this.props.showing && event.keyCode === 27) {
     this.props.hideConfirmModal()
   }
@@ -51,12 +52,22 @@ export default class ModalConfirm extends Component {
       newFile,
       hideConfirmModal,
       triggerRefile,
+      institution,
     } = this.props
 
     // get the page
     const page = window.location.pathname.split('/').slice(-1)[0]
 
-    if (!filingPeriod || !lei || !hideConfirmModal || !triggerRefile) return null
+    if (!filingPeriod || !lei || !hideConfirmModal || !triggerRefile)
+      return null
+
+    const dataOfficialVsTest = isBeta() ? 'HMDA test' : 'official HMDA'
+
+    const headerOfficialVsTest = isBeta() ? (
+      <h3 className='notice test'>For Testing Purposes Only</h3>
+    ) : (
+      <h3 className='notice official'>Official Submission</h3>
+    )
 
     return (
       <div
@@ -64,38 +75,45 @@ export default class ModalConfirm extends Component {
           'modal-blurred-blocker' + (showing ? ' showing-blurred-blocker' : '')
         }
       >
-        <section role="dialog" className="modal">
-          <h2>Upload a new file?</h2>
+        <section role='dialog' className='modal'>
+          <span className='inline space-between'>
+            <h2>Upload a new file?</h2>
+            {headerOfficialVsTest}
+          </span>
           <hr />
-          <div className="modal-contents">
-            <RefileText code={code} />
+          <div className='modal-contents'>
+            <RefileText
+              code={code}
+              filingPeriod={filingPeriod}
+              institution={institution}
+            />
             <button
               tabIndex={showing ? 0 : -1}
-              onClick={e => {
+              onClick={(e) => {
                 e.preventDefault()
                 hideConfirmModal()
                 triggerRefile(lei, filingPeriod, page, newFile)
               }}
-              onBlur={e => {
+              onBlur={(e) => {
                 e.preventDefault()
                 return _focusLink()
               }}
-              ref={button => (this.confirmButton = button)}
+              ref={(button) => (this.confirmButton = button)}
             >
-              Yes, replace HMDA data.
+              Yes, replace {dataOfficialVsTest} data.
             </button>
             <button
               tabIndex={showing ? 0 : -1}
-              className="button-link text-small"
-              onClick={e => {
+              className='button-link text-small'
+              onClick={(e) => {
                 e.preventDefault()
                 hideConfirmModal()
               }}
-              onBlur={e => {
+              onBlur={(e) => {
                 e.preventDefault()
                 _focusButton()
               }}
-              ref={a => (this.hideLink = a)}
+              ref={(a) => (this.hideLink = a)}
             >
               No, take me back.
             </button>
@@ -113,5 +131,5 @@ ModalConfirm.propTypes = {
   triggerRefile: PropTypes.func,
   showing: PropTypes.bool,
   code: PropTypes.number,
-  newFile: PropTypes.object
+  newFile: PropTypes.object,
 }

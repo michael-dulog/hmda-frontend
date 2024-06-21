@@ -10,7 +10,7 @@ import {
   NO_MACRO_EDITS,
   MACRO_EDITS,
   VALIDATED,
-  SIGNED
+  SIGNED,
 } from '../constants/statusCodes.js'
 
 import './Nav.css'
@@ -18,12 +18,6 @@ import './Nav.css'
 export default class EditsNav extends Component {
   constructor(props) {
     super(props)
-    this.handleScroll = this.handleScroll.bind(this)
-    this.state = {
-      fixed: false,
-      headerHeight: 0,
-      editsNavHeight: 0
-    }
     this.navMap = {
       upload: {
         isReachable: () => true,
@@ -32,11 +26,12 @@ export default class EditsNav extends Component {
         errorClass: 'error',
         errorText: 'uploaded with formatting errors',
         completedText: 'uploaded',
-        link: 'upload'
+        link: 'upload',
       },
       'syntactical & validity edits': {
         isReachable: () =>
-          this.props.editsFetched && this.navMap.upload.isCompleted(),
+          (this.props.editsFetched && this.navMap.upload.isCompleted()) ||
+          this.props.code >= NO_SYNTACTICAL_VALIDITY_EDITS,
         isErrored: () => this.props.code === SYNTACTICAL_VALIDITY_EDITS,
         isCompleted: () =>
           (this.navMap['syntactical & validity edits'].isReachable() &&
@@ -45,12 +40,15 @@ export default class EditsNav extends Component {
         errorClass: 'warning-exclamation',
         errorText: 'syntactical & validity edits found',
         completedText: 'no syntactical & validity edits',
-        link: 'syntacticalvalidity'
+        link: 'syntacticalvalidity',
       },
       'quality edits': {
         isReachable: () =>
-          this.props.editsFetched && this.navMap['syntactical & validity edits'].isCompleted(),
-        isErrored: () => this.props.qualityExists && !this.props.qualityVerified,
+          this.props.editsFetched &&
+          this.navMap['syntactical & validity edits'].isCompleted() &&
+          this.props.code !== 8,
+        isErrored: () =>
+          this.props.qualityExists && !this.props.qualityVerified,
         isCompleted: () =>
           this.navMap['quality edits'].isReachable() &&
           this.props.code >= NO_QUALITY_EDITS &&
@@ -58,61 +56,32 @@ export default class EditsNav extends Component {
         errorClass: 'warning-question',
         errorText: 'quality edits found',
         completedText: 'quality edits verified',
-        link: 'quality'
+        link: 'quality',
       },
       'macro quality edits': {
-        isReachable: () => this.props.editsFetched && this.navMap['quality edits'].isCompleted(),
+        isReachable: () =>
+          this.props.editsFetched &&
+          this.navMap['quality edits'].isCompleted() &&
+          this.props.code !== 12,
         isErrored: () => this.props.macroExists && !this.props.macroVerified,
         isCompleted: () =>
           this.navMap['macro quality edits'].isReachable() &&
-          (this.props.code > MACRO_EDITS || this.props.code === NO_MACRO_EDITS) &&
+          (this.props.code > MACRO_EDITS ||
+            this.props.code === NO_MACRO_EDITS) &&
           (!this.props.macroExists || this.props.macroVerified),
         errorClass: 'warning-question',
         errorText: 'macro quality edits found',
         completedText: 'macro quality edits verified',
-        link: 'macro'
+        link: 'macro',
       },
       submission: {
-        isReachable: () => this.props.code >= VALIDATED || this.props.code === NO_MACRO_EDITS,
+        isReachable: () =>
+          this.props.code >= VALIDATED || this.props.code === NO_MACRO_EDITS,
         isErrored: () => false,
         isCompleted: () => this.props.code === SIGNED,
         completedText: 'submitted',
-        link: 'submission'
-      }
-    }
-  }
-
-  componentDidMount() {
-    window.addEventListener('scroll', this.handleScroll)
-    const header = document.getElementById('header')
-    const userHeading = document.getElementById('userHeading')
-    const editsNav = document.getElementById('editsNav')
-    if (!header || !userHeading || !editsNav) return
-    this.setState({
-      headerHeight: header.clientHeight + userHeading.clientHeight,
-      editsNavHeight: editsNav.clientHeight
-    })
-  }
-
-  componentDidUpdate() {
-    const currentHeight = document.getElementById('editsNav').clientHeight
-    if (this.state.editsNavHeight !== currentHeight) {
-      this.setState({
-        editsNavHeight: currentHeight
-      })
-    }
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('scroll', this.handleScroll)
-  }
-
-  handleScroll() {
-    const state = this.state
-    if (window.scrollY >= state.headerHeight) {
-      if (!state.fixed) this.setState({ fixed: true })
-    } else {
-      if (state.fixed) this.setState({ fixed: false })
+        link: 'submission',
+      },
     }
   }
 
@@ -140,13 +109,12 @@ export default class EditsNav extends Component {
       if (navClass !== 'active') step = null
       if (navClass === 'warning-exclamation') step = '!'
       if (navClass === 'warning-question') step = '?'
-
       if (navItem.link === page) navClass = `${navClass} current`
 
       return (
         <li className={navClass} key={i}>
-          <Link className="nav-link" to={`${base}/${navItem.link}`}>
-            <div className="step">{step}</div>
+          <Link className='nav-link' to={`${base}/${navItem.link}`}>
+            <div className='step'>{step}</div>
             {renderedName}
           </Link>
         </li>
@@ -154,7 +122,7 @@ export default class EditsNav extends Component {
     } else {
       return (
         <li key={i}>
-          <div className="step">{step}</div>
+          <div className='step'>{step}</div>
           {name}
         </li>
       )
@@ -162,17 +130,15 @@ export default class EditsNav extends Component {
   }
 
   render() {
-    const wrapperHeight = { height: `${this.state.editsNavHeight}px` }
-    const fixed = this.state.fixed ? 'EditsNav-fixed' : ''
     return (
-      <section style={wrapperHeight}>
-        <nav className={`EditsNav ${fixed}`} id="editsNav">
-          <ul className="nav-primary">
+      <section style={{ height: 'auto' }}>
+        <nav className={`EditsNav`} id='editsNav'>
+          <ul className='nav-primary'>
             {Object.keys(this.navMap).map((name, i) => {
               return this.renderNavItem(name, i)
             })}
           </ul>
-          <hr className="nav-bg" />
+          <hr className='nav-bg' />
         </nav>
       </section>
     )
@@ -187,5 +153,5 @@ EditsNav.propTypes = {
   qualityExists: PropTypes.bool.isRequired,
   qualityVerified: PropTypes.bool.isRequired,
   macroExists: PropTypes.bool.isRequired,
-  macroVerified: PropTypes.bool.isRequired
+  macroVerified: PropTypes.bool.isRequired,
 }

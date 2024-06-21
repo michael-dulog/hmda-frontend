@@ -411,7 +411,7 @@ const msaToName = {
   40484: 'ROCKINGHAM COUNTY-STRAFFORD COUNTY',
   39660: 'RAPID CITY',
   43620: 'SIOUX FALLS',
-  99999: 'N/A OR OUTSIDE MSA/MD'
+  99999: 'N/A OR OUTSIDE MSA/MD',
 }
 
 const msaToName2019 = {
@@ -470,10 +470,27 @@ const msaToName2019 = {
   48424: 'WEST PALM BEACH-BOCA RATON-BOYNTON BEACH',
 }
 
-const msamdToName2017 = {...JSON.parse(cbsasRaw), ...msaToName}
+const msamdToName2017 = { ...JSON.parse(cbsasRaw), ...msaToName }
+
+const msaToName2020 = { ...msaToName2019 }
+
+const deleteFrom2020 = [
+  16974, // "CHICAGO-NAPERVILLE-ARLINGTON HEIGHTS"
+  19380, // "DAYTON"
+  20524, // "DUTCHESS COUNTY-PUTNAM COUNTY"
+  39140, // "PRESCOTT"
+  43524, // "SILVER SPRING-FREDERICK-ROCKVILLE"
+]
+
+deleteFrom2020.forEach((key) => {
+  delete msaToName2020[key]
+})
 
 export default {
   2017: msamdToName2017,
   2018: msaToName,
-  2019: msaToName2019
+  2019: msaToName2019,
+  2020: msaToName2020,
+  2021: msaToName2020,
+  2022: msaToName2020,
 }

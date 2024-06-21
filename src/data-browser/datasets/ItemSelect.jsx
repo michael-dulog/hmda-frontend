@@ -9,9 +9,8 @@ import {
   pruneItemOptions,
   makeItemSelectValues,
   makeItemPlaceholder,
-  itemStyleFn
+  itemStyleFn,
 } from './selectUtils.js'
-
 
 const ItemSelect = ({
   options,
@@ -19,7 +18,7 @@ const ItemSelect = ({
   onCategoryChange,
   items,
   onChange,
-  year
+  year,
 }) => {
   const selectedValues = makeItemSelectValues(category, items, year)
   const nationwide = isNationwide(category)
@@ -33,29 +32,31 @@ const ItemSelect = ({
         <a
           target='_blank'
           rel='noopener noreferrer'
-          href='https://ffiec.cfpb.gov/documentation/2018/data-browser-filters/#Nationwide'
+          href='/documentation/tools/data-browser/data-browser-filters#nationwide'
         >
           View more information on the available filters.
         </a>
       </p>
-      <CategorySelect category={category} onChange={onCategoryChange} />
-      <Select
-        id='ItemSelector'
-        components={{ MenuList }}
-        filterOption={createFilter({ ignoreAccents: false })}
-        controlShouldRenderValue={false}
-        styles={itemStyleFn}
-        onChange={onChange}
-        placeholder={makeItemPlaceholder(category, selectedValues)}
-        isMulti={true}
-        searchable={true}
-        isDisabled={nationwide}
-        autoFocus
-        openOnFocus
-        simpleValue
-        value={selectedValues}
-        options={pruneItemOptions(category, options, selectedValues)}
-      />
+      <div className='inline-selects'>
+        <CategorySelect category={category} onChange={onCategoryChange} />
+        <Select
+          id='ItemSelector'
+          components={{ MenuList }}
+          filterOption={createFilter({ ignoreAccents: false })}
+          controlShouldRenderValue={false}
+          styles={itemStyleFn}
+          onChange={onChange}
+          placeholder={makeItemPlaceholder(category, selectedValues)}
+          isMulti={true}
+          searchable={true}
+          isDisabled={nationwide}
+          autoFocus
+          openOnFocus
+          simpleValue
+          value={selectedValues}
+          options={pruneItemOptions(category, options, selectedValues)}
+        />
+      </div>
       {nationwide ? null : (
         <Pills values={selectedValues} onChange={onChange} />
       )}

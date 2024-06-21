@@ -79,12 +79,21 @@ yarn-error.log
 # setupProxy.js
 build/
 env.json
+env.dev.local
 local_keycloak.json
 cypress.env.json
 cypress/videos/
 cypress/screenshots/
+cypress/downloads/
 package-lock.json
+## Documentation Markdown files served locally for testing during development 
+public/markdown
 
 # Editor Configs #
 .vscode/
 .eslintcache
+
+dev-notes.*
+
+# Load-test fixtures are too large for Github
+cypress/fixtures/*-MAX.txt

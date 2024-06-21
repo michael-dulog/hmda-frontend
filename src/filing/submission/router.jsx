@@ -16,16 +16,21 @@ import {
   QUALITY_EDITS,
   NO_MACRO_EDITS,
   MACRO_EDITS,
-  VALIDATED
+  VALIDATED,
+  NO_SYNTACTICAL_VALIDITY_EDITS,
+  SIGNED,
 } from '../constants/statusCodes.js'
 
 const editTypes = ['syntacticalvalidity', 'quality', 'macro']
 const submissionRoutes = ['upload', ...editTypes, 'submission']
 
 export class SubmissionRouter extends Component {
+  state = {
+    isLoading: true,
+  }
 
   componentDidUpdate(prev) {
-    if(!equal(this.props, prev)) this.guardRouting()
+    if (!equal(this.props, prev)) this.guardRouting()
   }
 
   componentDidMount() {
@@ -34,39 +39,64 @@ export class SubmissionRouter extends Component {
 
   guardRouting() {
     this.renderChildren = false
-    const { submission, refiling, edits, lei, match: {params}, dispatch } = this.props
+    const {
+      submission,
+      refiling,
+      edits,
+      lei,
+      match: { params },
+      dispatch,
+    } = this.props
     const status = submission.status
     const [filingYear, filingQuarter] = params.filingPeriod.split('-')
     // eslint-disable-next-line
-    const wrongPeriod = !submission.id || +submission.id.period.year !== +filingYear || submission.id.period.quarter != filingQuarter
+    const wrongPeriod =
+      !submission.id ||
+      +submission.id.period.year !== +filingYear ||
+      submission.id.period.quarter != filingQuarter
 
     if (!params.lei) {
       return this.goToAppHome()
     }
 
-    const unmatchedId =
-      submission.id && submission.id.lei !== params.lei
+    const unmatchedId = submission.id && submission.id.lei !== params.lei
 
     if (unmatchedId) dispatch(refreshState())
-    if(!lei || lei !== params.lei) return dispatch(setLei(params.lei))
+    if (!lei || lei !== params.lei) return dispatch(setLei(params.lei))
 
-    if(refiling || submission.isFetching) return
+    if (refiling || submission.isFetching) return
 
-    if (unmatchedId || !status || status.code === UNINITIALIZED || wrongPeriod) {
-      return dispatch(fetchSubmission()).then(() => {
-        if(this.editsNeeded()){
-          if(!edits.fetched && !edits.isFetching){
-            dispatch(fetchEdits()).then(() => {
+    if (
+      unmatchedId ||
+      !status ||
+      status.code === UNINITIALIZED ||
+      wrongPeriod
+    ) {
+      this.setState({ isLoading: true }, () => {
+        dispatch(fetchSubmission())
+          .then(() => {
+            if (this.editsNeeded()) {
+              if (!edits.fetched && !edits.isFetching) {
+                return dispatch(fetchEdits())
+              }
+            }
+          })
+          .then(() => {
+            this.setState({ isLoading: false }, () => {
               this.route()
             })
-          }
-        } else {
-          this.route()
-        }
+          })
       })
+      return
     }
 
-    this.route()
+    if (status.code !== UNINITIALIZED) {
+      this.setState({ isLoading: false }, () => {
+        this.route()
+      })
+    } else {
+      this.setState({ isLoading: false })
+    }
   }
 
   editsNeeded() {
@@ -96,7 +126,12 @@ export class SubmissionRouter extends Component {
     if (code <= VALIDATING || code === NO_QUALITY_EDITS) return 'upload'
     if (code >= VALIDATED || code === NO_MACRO_EDITS) return 'submission'
     if (code === SYNTACTICAL_VALIDITY_EDITS) return 'syntacticalvalidity'
-    if (code >= QUALITY_EDITS && qualityExists && !qualityVerified) return 'quality'
+    if (
+      (code >= QUALITY_EDITS || code === NO_SYNTACTICAL_VALIDITY_EDITS) &&
+      qualityExists &&
+      !qualityVerified
+    )
+      return 'quality'
     return 'macro'
   }
 
@@ -130,33 +165,41 @@ export class SubmissionRouter extends Component {
     return this.update()
   }
 
-  update(){
+  update() {
     this.renderChildren = true
     return this.forceUpdate()
   }
 
   render() {
-    const { submission, lei, match: {params} } = this.props
+    const {
+      submission,
+      lei,
+      match: { params },
+    } = this.props
     const { code } = submission.status
 
     if (
+      this.state.isLoading ||
       code === UNINITIALIZED ||
-      (code < VALIDATED && code !== NO_MACRO_EDITS && params.splat === 'submission') ||
+      (code < VALIDATED &&
+        code !== NO_MACRO_EDITS &&
+        params.splat === 'submission') ||
       submission.isFetching ||
       submission.id.lei !== params.lei ||
       lei !== params.lei ||
       !this.renderChildren ||
       !params.splat
     )
-      return <Loading className="floatingIcon" />
+      return <Loading className='floatingIcon' />
     return <SubmissionContainer {...this.props} />
   }
 }
 
 export function mapStateToProps(state, ownProps) {
   const { submission, lei, edits, refiling } = state.app
-
-  const { match: {params}, config: {filingQuarters} } = ownProps
+  const {
+    match: { params },
+  } = ownProps
 
   return {
     submission,
@@ -164,7 +207,6 @@ export function mapStateToProps(state, ownProps) {
     lei,
     edits,
     refiling,
-    filingQuarters
   }
 }
 

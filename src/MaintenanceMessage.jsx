@@ -4,27 +4,27 @@ import './MaintenanceMessage.css'
 let maintenanceClosed = false
 
 const MaintenanceMessage = ({ config, closeCallback }) => {
-  const { announcement, maintenanceMode } = config
+  const { filingAnnouncement, maintenanceMode } = config
 
-  if(!maintenanceMode || !announcement) return null
+  if (!maintenanceMode || !filingAnnouncement) return null
 
   const isOpen = maintenanceMode && !maintenanceClosed
-  const cname = announcement.type + (!isOpen ? ' closed' : '')
+  const cname = filingAnnouncement.type + (!isOpen ? ' closed' : '')
 
-  const closeHandler = e => {
+  const closeHandler = (e) => {
     e.preventDefault()
     maintenanceClosed = true
-    if(closeCallback) closeCallback()
+    if (closeCallback) closeCallback()
   }
 
   return (
-    <div id="maintenance-message" className={cname}>
-      <p className="closer">
-        <button title="Dismiss" onClick={closeHandler}>
+    <div id='maintenance-message' className={cname}>
+      <p className='closer'>
+        <button title='Dismiss' onClick={closeHandler}>
           x
         </button>
       </p>
-      <p>{announcement.message}</p>
+      <p>{filingAnnouncement.message}</p>
     </div>
   )
 }

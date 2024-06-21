@@ -4,50 +4,83 @@ import { Provider } from 'react-redux'
 import thunkMiddleware from 'redux-thunk'
 import { createLogger } from 'redux-logger'
 
+import Alert from '../../common/Alert'
 import Heading from '../../common/Heading'
 import AppContainer from './containers/App'
 import UploadContainer from './containers/UploadForm'
 import ParseErrorsContainer from './containers/ParseErrors'
-import FilingPeriodSelectorContainer from './containers/FilingPeriodSelector'
 import appReducer from './reducers'
+import { withAppContext } from '../../common/appContextHOC'
 
 import './FFVT.css'
+import { getToolAnnouncement } from '../../common/getToolAnnouncement'
 
 const middleware = [thunkMiddleware]
-if (process.env.NODE_ENV !== 'production') middleware.push(createLogger())
+if (import.meta.env.MODE !== 'production') middleware.push(createLogger())
 
 const store = createStore(
   combineReducers({
-    app: appReducer
+    app: appReducer,
   }),
-  applyMiddleware(...middleware)
+  applyMiddleware(...middleware),
 )
 
+let timeout = null
+
+const FFVTDowntimeBanner = ({ message }) =>
+  message && (
+    <Alert type='error' heading='FFVT Unavailable'>
+      <p>{message}</p>
+    </Alert>
+  )
+
 class FFVT extends React.Component {
+  componentDidMount() {
+    timeout && clearTimeout(timeout)
+    timeout = setTimeout(() => window.scrollTo(0, 0), 100)
+  }
+
   render() {
-    const selector = <FilingPeriodSelectorContainer />
+    const { maintenanceMode, ffvtAnnouncement, filingAnnouncement } =
+      this.props.config
+    const downtimeMessage =
+      ffvtAnnouncement || (filingAnnouncement && filingAnnouncement.message)
+    const toolAnnouncement = getToolAnnouncement('ffvt', this.props.config)
+
     return (
       <Provider store={store}>
         <AppContainer>
-          <div id="main-content" className="grid FFVT">
+          <div id='main-content' className='grid FFVT'>
             <Heading
               type={1}
-              headingText={selector}
-              paragraphText="Select a HMDA file from your computer and
+              headingText='File Format Verification Tool'
+              paragraphText='Select a HMDA file from your computer and
                 test whether it meets certain formatting requirements needed
-                to submit HMDA data to the HMDA Platform. There is a unique
-                File Format Verification Tool for each HMDA data collection
-                year, so please select the relevant year before uploading a
-                file. The File Format Verification Tool does not test for
-                compliance with edits."
+                to submit HMDA data to the HMDA Platform. The File Format 
+                Verification Tool does not test for compliance with Edits.'
             />
 
-            <div className="grid">
-              <div className="item">
-                <UploadContainer />
-                <ParseErrorsContainer />
+            {toolAnnouncement && (
+              <Alert
+                heading={toolAnnouncement.heading}
+                type={toolAnnouncement.type}
+              >
+                <p>{toolAnnouncement.message}</p>
+              </Alert>
+            )}
+
+            <div className='grid'>
+              <div className='item'>
+                {maintenanceMode && downtimeMessage ? (
+                  <FFVTDowntimeBanner message={downtimeMessage} />
+                ) : (
+                  <>
+                    <UploadContainer />
+                    <ParseErrorsContainer />
+                  </>
+                )}
               </div>
-              <div className="item content text-small">
+              <div className='item content text-small'>
                 <p>
                   The File Format Verification Tool (FFVT) is a resource for
                   testing whether your file meets certain formatting
@@ -89,4 +122,4 @@ class FFVT extends React.Component {
   }
 }
 
-export default FFVT
+export default withAppContext(FFVT)
